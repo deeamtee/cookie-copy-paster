@@ -4,6 +4,9 @@ const MESSAGE_TYPE_CLEAR = "clearCookies";
 const MESSAGE_TYPE_AUTHORIZE = "authorize";
 const SAVE_DEBOUNCE_MS = 300;
 const REQUIRED_SELECTOR_PREFIXES = ["#", "."];
+const AUTO_COPY_RETRY_COUNT = 3;
+const AUTO_COPY_RETRY_DELAY_MS = 700;
+const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 const form = document.querySelector("#cookie-form");
 const sourceUrlInput = document.querySelector("#source-url");
@@ -146,7 +149,7 @@ async function handleSubmit(event) {
   event.preventDefault();
   await copyCookies();
 }
-async function copyCookies({ mode = "manual" } = {}) {
+async function copyCookies({ mode = "manual", retries = 0, retryDelayMs = 500 } = {}) {
   const isManual = mode === "manual";
   if (isManual) {
     clearStatus();
@@ -166,39 +169,68 @@ async function copyCookies({ mode = "manual" } = {}) {
   if (isManual) {
     setCopyLoading(true);
   }
+  let lastError = null;
   try {
-    const response = await chrome.runtime.sendMessage({
-      type: MESSAGE_TYPE_COPY,
-      payload: { sourceUrl, destinationUrl, keys, copyAll },
-    });
-    if (!response?.success) {
-      throw new Error(response?.error ?? "Не удалось выполнить копирование.");
+    for (let attempt = 0; attempt <= retries; attempt += 1) {
+      if (!isManual && attempt > 0) {
+        await delay(retryDelayMs);
+      }
+
+      try {
+        const response = await chrome.runtime.sendMessage({
+          type: MESSAGE_TYPE_COPY,
+          payload: { sourceUrl, destinationUrl, keys, copyAll },
+        });
+
+        if (!response?.success) {
+          throw new Error(response?.error ?? "Не удалось выполнить копирование.");
+        }
+
+        const result = response?.result ?? { copied: 0, attempted: 0, skipped: 0, errors: [] };
+
+        if (!isManual && attempt < retries && (result.attempted ?? 0) === 0) {
+          continue;
+        }
+
+        const summaryParts = [
+          `Скопировано cookie: ${result.copied}`,
+          `Попыток: ${result.attempted}`,
+        ];
+
+        if (result.skipped) {
+          summaryParts.push(`Пропущено: ${result.skipped}`);
+        }
+
+        const summary = summaryParts.join(", ");
+
+        if (isManual) {
+          showStatus(summary);
+          renderErrors(result.errors);
+        }
+
+        return { success: true, summary, errors: result.errors ?? [], details: result };
+      } catch (error) {
+        lastError = error instanceof Error ? error : new Error(String(error));
+        console.error("Не удалось скопировать cookie:", lastError);
+
+        if (isManual || attempt === retries) {
+          if (isManual) {
+            showStatus(lastError.message ?? String(lastError), true);
+          }
+          return { success: false, error: lastError };
+        }
+      }
     }
-    const { result } = response;
-    const summaryParts = [
-      `Скопировано cookie: ${result.copied}`,
-      `Попыток: ${result.attempted}`,
-    ];
-    if (result.skipped) {
-      summaryParts.push(`Пропущено: ${result.skipped}`);
-    }
-    const summary = summaryParts.join(", ");
-    if (isManual) {
-      showStatus(summary);
-      renderErrors(result.errors);
-    }
-    return { success: true, summary, errors: result.errors ?? [] };
-  } catch (error) {
-    console.error("Не удалось скопировать cookie:", error);
-    if (isManual) {
-      showStatus(error.message ?? String(error), true);
-    }
-    return { success: false, error };
   } finally {
     if (isManual) {
       setCopyLoading(false);
     }
   }
+
+  return {
+    success: false,
+    error: lastError ?? new Error("Не удалось скопировать cookie автоматически."),
+  };
 }
 async function handleClearCookies() {
   clearStatus();
@@ -314,7 +346,11 @@ async function handleAuthorize() {
     let combinedErrors = [...authErrors];
 
     if (shouldAutoCopyAfterAuth()) {
-      const autoCopyResult = await copyCookies({ mode: "auto" });
+      const autoCopyResult = await copyCookies({
+        mode: "auto",
+        retries: AUTO_COPY_RETRY_COUNT,
+        retryDelayMs: AUTO_COPY_RETRY_DELAY_MS,
+      });
 
       if (autoCopyResult.success) {
         statusText = `${authMessage} ${autoCopyResult.summary}`;
