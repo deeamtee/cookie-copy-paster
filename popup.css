@@ -25,9 +25,25 @@ body {
     border-color: #495057;
   }
 
+  #auth-accordion {
+    background: #2b2d31;
+    border-color: #495057;
+  }
+
   button {
     background: #495057;
     border-color: #343a40;
+    color: inherit;
+  }
+
+  .secondary-button {
+    background: transparent;
+    border-color: #6c757d;
+    color: inherit;
+  }
+
+  .secondary-button:hover:not([disabled]) {
+    background: rgba(255, 255, 255, 0.08);
   }
 }
 
@@ -60,6 +76,7 @@ textarea {
   border-radius: 6px;
   font-size: 14px;
   resize: vertical;
+  background: #fff;
 }
 
 .toggle {
@@ -69,19 +86,87 @@ textarea {
   font-weight: 600;
 }
 
-button[type="submit"] {
+.actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.actions .primary-button {
+  flex: 1 1 auto;
+}
+
+.actions .secondary-button {
+  flex: 1 1 auto;
+}
+
+button {
   padding: 10px 16px;
-  border: 1px solid #0d6efd;
   border-radius: 6px;
-  background: #0d6efd;
-  color: #fff;
   font-weight: 600;
   cursor: pointer;
+  border: 1px solid #0d6efd;
+  background: #0d6efd;
+  color: #fff;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+button:hover:not([disabled]) {
+  background: #0b5ed7;
 }
 
 button[disabled] {
   opacity: 0.6;
-  cursor: progress;
+  cursor: not-allowed;
+}
+
+.primary-button {
+  background: #0d6efd;
+  border-color: #0b5ed7;
+  color: #fff;
+}
+
+.secondary-button {
+  background: #f1f3f5;
+  border-color: #ced4da;
+  color: #212529;
+}
+
+.secondary-button:hover:not([disabled]) {
+  background: #e9ecef;
+}
+
+.auth-button {
+  width: 100%;
+}
+
+#auth-accordion {
+  border: 1px solid #ced4da;
+  border-radius: 6px;
+  background: #fff;
+  padding: 0;
+}
+
+#auth-accordion summary {
+  padding: 10px 14px;
+  font-weight: 600;
+  cursor: pointer;
+  list-style: none;
+}
+
+#auth-accordion summary::-webkit-details-marker {
+  display: none;
+}
+
+#auth-accordion[open] summary {
+  border-bottom: 1px solid #ced4da;
+}
+
+.accordion-content {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 12px 14px 14px;
 }
 
 #status {

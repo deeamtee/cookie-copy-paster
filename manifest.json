@@ -11,7 +11,9 @@
   },
   "permissions": [
     "cookies",
-    "storage"
+    "storage",
+    "tabs",
+    "scripting"
   ],
   "host_permissions": [
     "<all_urls>"

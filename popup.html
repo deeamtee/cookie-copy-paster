@@ -46,7 +46,95 @@
           ></textarea>
         </label>
 
-        <button type="submit" id="copy-button">Скопировать</button>
+        <div class="actions">
+          <button type="submit" id="copy-button" class="primary-button">
+            Скопировать
+          </button>
+          <button
+            type="button"
+            id="clear-cookies-button"
+            class="secondary-button"
+          >
+            Очистить куки
+          </button>
+        </div>
+
+        <button
+          type="button"
+          id="authorize-button"
+          class="primary-button auth-button"
+          disabled
+        >
+          Авторизоваться
+        </button>
+
+        <details id="auth-accordion">
+          <summary>Авторизация</summary>
+          <div class="accordion-content">
+            <label class="field">
+              <span>URL ресурса</span>
+              <input
+                type="url"
+                id="auth-url"
+                name="auth-url"
+                placeholder="https://example.com/login"
+                autocomplete="url"
+              />
+            </label>
+
+            <label class="field">
+              <span>Логин</span>
+              <input
+                type="text"
+                id="auth-username"
+                name="auth-username"
+                placeholder="username"
+                autocomplete="username"
+              />
+            </label>
+
+            <label class="field">
+              <span>Пароль</span>
+              <input
+                type="password"
+                id="auth-password"
+                name="auth-password"
+                placeholder="password"
+                autocomplete="current-password"
+              />
+            </label>
+
+            <label class="field">
+              <span>Селектор поля логина</span>
+              <input
+                type="text"
+                id="auth-username-selector"
+                name="auth-username-selector"
+                placeholder="#login-input"
+              />
+            </label>
+
+            <label class="field">
+              <span>Селектор поля пароля</span>
+              <input
+                type="text"
+                id="auth-password-selector"
+                name="auth-password-selector"
+                placeholder="#password-input"
+              />
+            </label>
+
+            <label class="field">
+              <span>Селектор кнопки входа</span>
+              <input
+                type="text"
+                id="auth-submit-selector"
+                name="auth-submit-selector"
+                placeholder="#login-button"
+              />
+            </label>
+          </div>
+        </details>
       </form>
 
       <section id="status" hidden>
