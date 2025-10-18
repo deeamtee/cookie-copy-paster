@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="ru">
+  <head>
+    <meta charset="utf-8" />
+    <title>Cookie Copy Paster</title>
+    <link rel="stylesheet" href="popup.css" />
+  </head>
+  <body>
+    <main>
+      <h1>Cookie Copy Paster</h1>
+      <form id="cookie-form">
+        <label class="field">
+          <span>URL источника</span>
+          <input
+            type="url"
+            id="source-url"
+            name="source-url"
+            placeholder="https://example.com"
+            required
+          />
+        </label>
+
+        <label class="field">
+          <span>URL назначения</span>
+          <input
+            type="url"
+            id="destination-url"
+            name="destination-url"
+            placeholder="https://target.com"
+            required
+          />
+        </label>
+
+        <label class="toggle">
+          <input type="checkbox" id="copy-all" name="copy-all" />
+          <span>Скопировать все cookie</span>
+        </label>
+
+        <label class="field" id="keys-container">
+          <span>Ключи cookie (через запятую)</span>
+          <textarea
+            id="cookie-keys"
+            name="cookie-keys"
+            placeholder="session_id, auth_token"
+            rows="3"
+          ></textarea>
+        </label>
+
+        <button type="submit" id="copy-button">Скопировать</button>
+      </form>
+
+      <section id="status" hidden>
+        <h2>Результат</h2>
+        <div id="status-message"></div>
+        <ul id="error-list"></ul>
+      </section>
+    </main>
+
+    <script src="popup.js" type="module"></script>
+  </body>
+</html>
