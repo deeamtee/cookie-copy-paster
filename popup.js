@@ -1,5 +1,6 @@
 const STORAGE_KEY = "cookieCopyPaster.settings";
 const MESSAGE_TYPE_COPY = "copyCookies";
+const SAVE_DEBOUNCE_MS = 300;
 
 const form = document.querySelector("#cookie-form");
 const sourceUrlInput = document.querySelector("#source-url");
@@ -11,6 +12,16 @@ const statusSection = document.querySelector("#status");
 const statusMessage = document.querySelector("#status-message");
 const errorList = document.querySelector("#error-list");
 
+const defaultSettings = {
+  sourceUrl: "",
+  destinationUrl: "",
+  keys: "",
+  copyAll: false,
+};
+
+let currentSettings = { ...defaultSettings };
+let saveTimeoutId = null;
+
 init().catch((error) => {
   console.error("Ошибка инициализации всплывающего окна:", error);
   showStatus(`Не удалось загрузить настройки: ${error.message}`, true);
@@ -19,7 +30,24 @@ init().catch((error) => {
 async function init() {
   await restoreFormState();
   handleCopyAllToggle();
+
+  sourceUrlInput.addEventListener("input", () =>
+    updateSettings({ sourceUrl: sourceUrlInput.value })
+  );
+
+  destinationUrlInput.addEventListener("input", () =>
+    updateSettings({ destinationUrl: destinationUrlInput.value })
+  );
+
+  keysInput.addEventListener("input", () =>
+    updateSettings({ keys: keysInput.value })
+  );
+
   copyAllCheckbox.addEventListener("change", handleCopyAllToggle);
+  copyAllCheckbox.addEventListener("change", () =>
+    updateSettings({ copyAll: copyAllCheckbox.checked })
+  );
+
   form.addEventListener("submit", handleSubmit);
 }
 
@@ -30,6 +58,8 @@ async function restoreFormState() {
   if (!settings) {
     return;
   }
+
+  currentSettings = { ...defaultSettings, ...settings };
 
   if (typeof settings.sourceUrl === "string") {
     sourceUrlInput.value = settings.sourceUrl;
@@ -108,7 +138,39 @@ function handleCopyAllToggle() {
 }
 
 async function saveSettings(settings) {
-  await chrome.storage.local.set({ [STORAGE_KEY]: settings });
+  await updateSettings(settings, { immediate: true });
+}
+
+async function updateSettings(partialSettings, options = {}) {
+  currentSettings = { ...currentSettings, ...partialSettings };
+
+  if (options.immediate) {
+    await persistSettings();
+    return;
+  }
+
+  schedulePersist();
+}
+
+function schedulePersist() {
+  if (saveTimeoutId) {
+    clearTimeout(saveTimeoutId);
+  }
+
+  saveTimeoutId = setTimeout(() => {
+    persistSettings().catch((error) => {
+      console.error("Не удалось сохранить настройки:", error);
+    });
+  }, SAVE_DEBOUNCE_MS);
+}
+
+async function persistSettings() {
+  if (saveTimeoutId) {
+    clearTimeout(saveTimeoutId);
+    saveTimeoutId = null;
+  }
+
+  await chrome.storage.local.set({ [STORAGE_KEY]: currentSettings });
 }
 
 function setLoading(isLoading) {
