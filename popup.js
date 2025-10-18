@@ -203,17 +203,33 @@ async function copyCookies({ mode = "manual" } = {}) {
 async function handleClearCookies() {
   clearStatus();
 
-  const preferredUrl = destinationUrlInput.value.trim();
-  const fallbackUrl = authUrlInput?.value.trim() ?? "";
-  const url = preferredUrl || fallbackUrl;
-
-  if (!url) {
-    showStatus("Укажите URL для очистки cookie.", true);
-    return;
-  }
-
   setClearCookiesLoading(true);
   try {
+    const queryTabs = (queryInfo) =>
+      new Promise((resolve, reject) => {
+        chrome.tabs.query(queryInfo, (tabs) => {
+          if (chrome.runtime.lastError) {
+            reject(new Error(chrome.runtime.lastError.message));
+            return;
+          }
+          resolve(tabs);
+        });
+      });
+
+    let [activeTab] = await queryTabs({ active: true, lastFocusedWindow: true });
+
+    if (!activeTab) {
+      [activeTab] = await queryTabs({ active: true, currentWindow: true });
+    }
+
+    const url =
+      typeof activeTab?.url === "string" ? activeTab.url.trim() : "";
+
+    if (!url) {
+      showStatus("Не удалось определить URL текущей вкладки.", true);
+      return;
+    }
+
     const response = await chrome.runtime.sendMessage({
       type: MESSAGE_TYPE_CLEAR,
       payload: { url },
