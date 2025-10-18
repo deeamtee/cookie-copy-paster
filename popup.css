@@ -25,7 +25,8 @@ body {
     border-color: #495057;
   }
 
-  #auth-accordion {
+  #auth-accordion,
+  #cookie-accordion {
     background: #2b2d31;
     border-color: #495057;
   }
@@ -140,25 +141,29 @@ button[disabled] {
   width: 100%;
 }
 
-#auth-accordion {
+#auth-accordion,
+#cookie-accordion {
   border: 1px solid #ced4da;
   border-radius: 6px;
   background: #fff;
   padding: 0;
 }
 
-#auth-accordion summary {
+#auth-accordion summary,
+#cookie-accordion summary {
   padding: 10px 14px;
   font-weight: 600;
   cursor: pointer;
   list-style: none;
 }
 
-#auth-accordion summary::-webkit-details-marker {
+#auth-accordion summary::-webkit-details-marker,
+#cookie-accordion summary::-webkit-details-marker {
   display: none;
 }
 
-#auth-accordion[open] summary {
+#auth-accordion[open] summary,
+#cookie-accordion[open] summary {
   border-bottom: 1px solid #ced4da;
 }
 

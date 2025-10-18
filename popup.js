@@ -16,6 +16,7 @@ const authorizeButton = document.querySelector("#authorize-button");
 const statusSection = document.querySelector("#status");
 const statusMessage = document.querySelector("#status-message");
 const errorList = document.querySelector("#error-list");
+const autoCopyAfterAuthCheckbox = document.querySelector("#auto-copy-after-auth");
 const authAccordion = document.querySelector("#auth-accordion");
 const authUrlInput = document.querySelector("#auth-url");
 const authUsernameInput = document.querySelector("#auth-username");
@@ -29,6 +30,7 @@ const defaultSettings = {
   destinationUrl: "",
   keys: "",
   copyAll: false,
+  autoCopyAfterAuth: false,
   authUrl: "",
   authUsername: "",
   authPassword: "",
@@ -65,6 +67,10 @@ async function init() {
   copyAllCheckbox.addEventListener("change", handleCopyAllToggle);
   copyAllCheckbox.addEventListener("change", () =>
     updateSettings({ copyAll: copyAllCheckbox.checked })
+  );
+
+  autoCopyAfterAuthCheckbox?.addEventListener("change", () =>
+    updateSettings({ autoCopyAfterAuth: autoCopyAfterAuthCheckbox.checked })
   );
 
   registerAuthInput(authUrlInput, "authUrl");
@@ -106,6 +112,10 @@ async function restoreFormState() {
     copyAllCheckbox.checked = settings.copyAll;
   }
 
+  if (typeof settings.autoCopyAfterAuth === "boolean" && autoCopyAfterAuthCheckbox) {
+    autoCopyAfterAuthCheckbox.checked = settings.autoCopyAfterAuth;
+  }
+
   if (typeof settings.authUrl === "string" && authUrlInput) {
     authUrlInput.value = settings.authUrl;
   }
@@ -134,48 +144,60 @@ async function restoreFormState() {
 
 async function handleSubmit(event) {
   event.preventDefault();
-  clearStatus();
-
+  await copyCookies();
+}
+async function copyCookies({ mode = "manual" } = {}) {
+  const isManual = mode === "manual";
+  if (isManual) {
+    clearStatus();
+  }
   const sourceUrl = sourceUrlInput.value.trim();
   const destinationUrl = destinationUrlInput.value.trim();
   const keys = keysInput.value.trim();
   const copyAll = copyAllCheckbox.checked;
-
   try {
     await saveSettings({ sourceUrl, destinationUrl, keys, copyAll });
   } catch (error) {
-    showStatus(`Не удалось сохранить настройки: ${error.message}`, true);
-    return;
+    if (isManual) {
+      showStatus(`Не удалось сохранить настройки: ${error.message}`, true);
+    }
+    return { success: false, error };
   }
-
-  setCopyLoading(true);
+  if (isManual) {
+    setCopyLoading(true);
+  }
   try {
     const response = await chrome.runtime.sendMessage({
       type: MESSAGE_TYPE_COPY,
       payload: { sourceUrl, destinationUrl, keys, copyAll },
     });
-
     if (!response?.success) {
       throw new Error(response?.error ?? "Не удалось выполнить копирование.");
     }
-
     const { result } = response;
-    const summary = [
+    const summaryParts = [
       `Скопировано cookie: ${result.copied}`,
       `Попыток: ${result.attempted}`,
     ];
-
     if (result.skipped) {
-      summary.push(`Пропущено: ${result.skipped}`);
+      summaryParts.push(`Пропущено: ${result.skipped}`);
     }
-
-    showStatus(summary.join(", "));
-    renderErrors(result.errors);
+    const summary = summaryParts.join(", ");
+    if (isManual) {
+      showStatus(summary);
+      renderErrors(result.errors);
+    }
+    return { success: true, summary, errors: result.errors ?? [] };
   } catch (error) {
     console.error("Не удалось скопировать cookie:", error);
-    showStatus(error.message ?? String(error), true);
+    if (isManual) {
+      showStatus(error.message ?? String(error), true);
+    }
+    return { success: false, error };
   } finally {
-    setCopyLoading(false);
+    if (isManual) {
+      setCopyLoading(false);
+    }
   }
 }
 async function handleClearCookies() {
@@ -268,10 +290,32 @@ async function handleAuthorize() {
       throw new Error(response?.error ?? "Не удалось выполнить авторизацию.");
     }
 
-    const message =
+    const authMessage =
       response.result?.message ?? "Авторизация и заполнение формы выполнены.";
-    showStatus(message);
-    renderErrors(response.result?.errors);
+    const authErrors = response.result?.errors ?? [];
+
+    let statusText = authMessage;
+    let combinedErrors = [...authErrors];
+
+    if (shouldAutoCopyAfterAuth()) {
+      const autoCopyResult = await copyCookies({ mode: "auto" });
+
+      if (autoCopyResult.success) {
+        statusText = `${authMessage} ${autoCopyResult.summary}`;
+        if (autoCopyResult.errors?.length) {
+          combinedErrors = [...authErrors, ...autoCopyResult.errors];
+        }
+      } else if (autoCopyResult.error) {
+        statusText = `${authMessage} ${autoCopyResult.error.message ?? String(autoCopyResult.error)}`;
+      }
+
+      if (!autoCopyResult.success && autoCopyResult.errors?.length) {
+        combinedErrors = [...authErrors, ...autoCopyResult.errors];
+      }
+    }
+
+    showStatus(statusText);
+    renderErrors(combinedErrors);
   } catch (error) {
     console.error("Ошибка автоматической авторизации:", error);
     showStatus(error.message ?? String(error), true);
@@ -290,6 +334,16 @@ function handleCopyAllToggle() {
     keysInput.placeholder = keysInput.dataset.placeholder;
     delete keysInput.dataset.placeholder;
   }
+}
+
+function shouldAutoCopyAfterAuth() {
+  if (!autoCopyAfterAuthCheckbox?.checked) {
+    return false;
+  }
+
+  const sourceUrl = sourceUrlInput.value.trim();
+  const destinationUrl = destinationUrlInput.value.trim();
+  return Boolean(sourceUrl && destinationUrl);
 }
 
 async function saveSettings(settings) {

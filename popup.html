@@ -9,42 +9,47 @@
     <main>
       <h1>Cookie Copy Paster</h1>
       <form id="cookie-form">
-        <label class="field">
-          <span>URL источника</span>
-          <input
-            type="url"
-            id="source-url"
-            name="source-url"
-            placeholder="https://example.com"
-            required
-          />
-        </label>
+        <details id="cookie-accordion">
+          <summary>Настройки cookie</summary>
+          <div class="accordion-content">
+            <label class="field">
+              <span>URL источника</span>
+              <input
+                type="url"
+                id="source-url"
+                name="source-url"
+                placeholder="https://example.com"
+                required
+              />
+            </label>
 
-        <label class="field">
-          <span>URL назначения</span>
-          <input
-            type="url"
-            id="destination-url"
-            name="destination-url"
-            placeholder="https://target.com"
-            required
-          />
-        </label>
+            <label class="field">
+              <span>URL назначения</span>
+              <input
+                type="url"
+                id="destination-url"
+                name="destination-url"
+                placeholder="https://target.com"
+                required
+              />
+            </label>
 
-        <label class="toggle">
-          <input type="checkbox" id="copy-all" name="copy-all" />
-          <span>Скопировать все cookie</span>
-        </label>
+            <label class="toggle">
+              <input type="checkbox" id="copy-all" name="copy-all" />
+              <span>Скопировать все cookie</span>
+            </label>
 
-        <label class="field" id="keys-container">
-          <span>Ключи cookie (через запятую)</span>
-          <textarea
-            id="cookie-keys"
-            name="cookie-keys"
-            placeholder="session_id, auth_token"
-            rows="3"
-          ></textarea>
-        </label>
+            <label class="field" id="keys-container">
+              <span>Ключи cookie (через запятую)</span>
+              <textarea
+                id="cookie-keys"
+                name="cookie-keys"
+                placeholder="session_id, auth_token"
+                rows="3"
+              ></textarea>
+            </label>
+          </div>
+        </details>
 
         <div class="actions">
           <button type="submit" id="copy-button" class="primary-button">
@@ -132,6 +137,15 @@
                 name="auth-submit-selector"
                 placeholder="#login-button"
               />
+            </label>
+
+            <label class="toggle">
+              <input
+                type="checkbox"
+                id="auto-copy-after-auth"
+                name="auto-copy-after-auth"
+              />
+              <span>Автоматически копировать cookie после авторизации</span>
             </label>
           </div>
         </details>
