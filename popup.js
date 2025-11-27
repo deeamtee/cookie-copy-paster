@@ -30,16 +30,16 @@ const authSubmitSelectorInput = document.querySelector("#auth-submit-selector");
 
 const defaultSettings = {
   sourceUrl: "",
-  destinationUrl: "",
+  destinationUrl: "https://localhost:5173/",
   keys: "",
-  copyAll: false,
-  autoCopyAfterAuth: false,
+  copyAll: true,
+  autoCopyAfterAuth: true,
   authUrl: "",
   authUsername: "",
   authPassword: "",
-  authUsernameSelector: "",
-  authPasswordSelector: "",
-  authSubmitSelector: "",
+  authUsernameSelector: "#USERNAME_FIELD-inner",
+  authPasswordSelector: "#PASSWORD_FIELD-inner",
+  authSubmitSelector: "#LOGIN_LINK",
 };
 
 let currentSettings = { ...defaultSettings };

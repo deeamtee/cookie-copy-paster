@@ -15,7 +15,7 @@ body {
 @media (prefers-color-scheme: dark) {
   body {
     background: #1d1f21;
-    color: #e9ecef;
+    color: #1d1e1f;
   }
 
   input,
@@ -45,6 +45,10 @@ body {
 
   .secondary-button:hover:not([disabled]) {
     background: rgba(255, 255, 255, 0.08);
+  }
+
+  .field {
+    color: #1d1e1f;
   }
 }
 
