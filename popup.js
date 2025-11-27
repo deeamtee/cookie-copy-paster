@@ -93,56 +93,30 @@ async function restoreFormState() {
   const stored = await chrome.storage.local.get(STORAGE_KEY);
   const settings = stored?.[STORAGE_KEY];
 
-  if (!settings) {
-    return;
+  // Всегда начинаем с defaultSettings
+  currentSettings = { ...defaultSettings };
+
+  // Если есть сохранённые настройки — объединяем (переопределяем дефолты)
+  if (settings) {
+    Object.assign(currentSettings, settings);
   }
 
-  currentSettings = { ...defaultSettings, ...settings };
+  // Теперь устанавливаем значения в поля формы из currentSettings
+  sourceUrlInput.value = currentSettings.sourceUrl;
+  destinationUrlInput.value = currentSettings.destinationUrl;
+  keysInput.value = currentSettings.keys;
+  copyAllCheckbox.checked = currentSettings.copyAll;
 
-  if (typeof settings.sourceUrl === "string") {
-    sourceUrlInput.value = settings.sourceUrl;
+  if (autoCopyAfterAuthCheckbox) {
+    autoCopyAfterAuthCheckbox.checked = currentSettings.autoCopyAfterAuth;
   }
 
-  if (typeof settings.destinationUrl === "string") {
-    destinationUrlInput.value = settings.destinationUrl;
-  }
-
-  if (typeof settings.keys === "string") {
-    keysInput.value = settings.keys;
-  }
-
-  if (typeof settings.copyAll === "boolean") {
-    copyAllCheckbox.checked = settings.copyAll;
-  }
-
-  if (typeof settings.autoCopyAfterAuth === "boolean" && autoCopyAfterAuthCheckbox) {
-    autoCopyAfterAuthCheckbox.checked = settings.autoCopyAfterAuth;
-  }
-
-  if (typeof settings.authUrl === "string" && authUrlInput) {
-    authUrlInput.value = settings.authUrl;
-  }
-
-  if (typeof settings.authUsername === "string" && authUsernameInput) {
-    authUsernameInput.value = settings.authUsername;
-  }
-
-  if (typeof settings.authPassword === "string" && authPasswordInput) {
-    authPasswordInput.value = settings.authPassword;
-  }
-
-  if (typeof settings.authUsernameSelector === "string" && authUsernameSelectorInput) {
-    authUsernameSelectorInput.value = settings.authUsernameSelector;
-  }
-
-  if (typeof settings.authPasswordSelector === "string" && authPasswordSelectorInput) {
-    authPasswordSelectorInput.value = settings.authPasswordSelector;
-  }
-
-  if (typeof settings.authSubmitSelector === "string" && authSubmitSelectorInput) {
-    authSubmitSelectorInput.value = settings.authSubmitSelector;
-  }
-
+  if (authUrlInput) authUrlInput.value = currentSettings.authUrl;
+  if (authUsernameInput) authUsernameInput.value = currentSettings.authUsername;
+  if (authPasswordInput) authPasswordInput.value = currentSettings.authPassword;
+  if (authUsernameSelectorInput) authUsernameSelectorInput.value = currentSettings.authUsernameSelector;
+  if (authPasswordSelectorInput) authPasswordSelectorInput.value = currentSettings.authPasswordSelector;
+  if (authSubmitSelectorInput) authSubmitSelectorInput.value = currentSettings.authSubmitSelector;
 }
 
 async function handleSubmit(event) {
